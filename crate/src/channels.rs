@@ -4,11 +4,12 @@ use image::Pixel as OtherPixel;
 
 use image::{GenericImage, GenericImageView};
 
-use crate::helpers;
+use crate::{helpers, Rgba};
 use crate::iter::ImageIterator;
 use crate::{PhotonImage, Rgb};
 use palette::{FromColor, IntoColor};
 use palette::{Hue, Lab, Lch, Saturate, Shade, Srgb, Srgba};
+use toodee::{TooDee, TooDeeOps, TooDeeOpsMut, TooDeeView, TooDeeViewMut};
 
 #[cfg(feature = "enable_wasm")]
 use wasm_bindgen::prelude::*;
@@ -365,16 +366,16 @@ pub fn swap_channels(img: &mut PhotonImage, mut channel1: usize, mut channel2: u
 /// ```
 #[cfg_attr(feature = "enable_wasm", wasm_bindgen)]
 pub fn invert(photon_image: &mut PhotonImage) {
-    let end = photon_image.get_raw_pixels().len();
 
-    for i in (0..end).step_by(4) {
-        let r_val = photon_image.raw_pixels[i];
-        let g_val = photon_image.raw_pixels[i + 1];
-        let b_val = photon_image.raw_pixels[i + 2];
+    let alignedImage = unsafe { photon_image.raw_pixels.align_to_mut::<Rgba>().1 };
 
-        photon_image.raw_pixels[i] = 255 - r_val;
-        photon_image.raw_pixels[i + 1] = 255 - g_val;
-        photon_image.raw_pixels[i + 2] = 255 - b_val;
+    let mut img = TooDeeViewMut::new(photon_image.width as usize,
+                                                  photon_image.height as usize, alignedImage);
+    let mut iter = img.cells_mut();
+    while let Some(pixel) = iter.next() {
+        pixel.r = 255 - pixel.r;
+        pixel.g = 255 - pixel.g;
+        pixel.b = 255 - pixel.b;
     }
 }
 

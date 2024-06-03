@@ -45,6 +45,7 @@ use image::GenericImage;
 use serde::{Deserialize, Serialize};
 use std::io::Cursor;
 
+
 #[cfg(feature = "enable_wasm")]
 use wasm_bindgen::prelude::*;
 
@@ -66,6 +67,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 /// For use when communicating between JS and WASM, and also natively.
 #[cfg_attr(feature = "enable_wasm", wasm_bindgen)]
 #[derive(Serialize, Deserialize, Clone, Debug)]
+#[repr(C)]
 pub struct PhotonImage {
     raw_pixels: Vec<u8>,
     width: u32,
@@ -166,7 +168,7 @@ impl PhotonImage {
 
     /// Get the PhotonImage's pixels as a Vec of u8s.
     pub fn get_raw_pixels(&self) -> Vec<u8> {
-        self.raw_pixels.clone()
+        self.clone().raw_pixels
     }
 
     /// Get the height of the PhotonImage.
@@ -334,7 +336,7 @@ impl From<Vec<u8>> for Rgb {
 
 /// RGBA color type.
 #[cfg_attr(feature = "enable_wasm", wasm_bindgen)]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub struct Rgba {
     r: u8,
     g: u8,

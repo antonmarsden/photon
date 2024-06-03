@@ -1,28 +1,26 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion, BatchSize};
 use photon_rs::native::{open_image, save_image};
 use photon_rs::transform::{resize, SamplingFilter};
 use std::time::Duration;
+use photon_rs::PhotonImage;
 
 fn criterion_benchmark(c: &mut Criterion) {
-    c.bench_function("invert_image", |b| b.iter(invert_image));
+    let original =
+        open_image("examples/input_images/underground.jpg").expect("File should open");
+
+    c.bench_function("invert_image", |b| {
+        let copy = original.clone();
+        b.iter_batched(|| copy.clone(), |(mut img)| { invert_image(&mut img); }, BatchSize::SmallInput)
+    });
 
     c.bench_function("resize_png", |b| b.iter(resize_png));
 
     c.bench_function("resize_jpg", |b| b.iter(resize_jpg));
 }
 
-fn invert_image() {
-    // Open the image (a PhotonImage is returned)
-    let mut img =
-        open_image("examples/input_images/underground.jpg").expect("File should open");
-
+fn invert_image(img: &mut PhotonImage) {
     // Invert the image
-    photon_rs::channels::invert(&mut img);
-
-    let output_img_path = "output.jpg";
-
-    // Write to filesystem
-    save_image(img, output_img_path).unwrap();
+    photon_rs::channels::invert(img);
 }
 
 fn resize_png() {
